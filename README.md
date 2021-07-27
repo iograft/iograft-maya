@@ -26,16 +26,6 @@ Used to shutdown the iograft session within Maya.
 Launch the iograft UI as a subprocess and connect to the iograft Core running inside of Maya. Note: The UI runs in a completely separate process and not internally in Maya. Only the iograft Core runs inside of Maya.
 
 
-## iograft Environment settings for Maya
-
-When defining the Maya environment in iograft's Environment Manager, we have to provide a few settings specific to Maya
-
-- The *Plugin Path* is where iograft will look for nodes. This should contain the directory where the Maya nodes exist.
-- The *Path* environment variable. This should include at least the directory containing `iogmaya_subcore`, Maya's 'bin' directory, and the iograft 'bin' directory.
-- The *Python Path* environment variable. This should point to the iograft python folder corresponding to Maya's Python version (python27 for Maya 2020). The `iogmaya_threading` library from this repository should also be made available to this environment's PYTHONPATH if any nodes use the `maya_main_thread` decorator.
-- Any additional *Environment Variables* such as `MAYA_PLUG_IN_PATH`.
-
-
 ## Launching Maya with an iograft Environment Set
 
 To launch Maya and set the environment so iograft can run, we need to let iograft know which environment we are in. This can be done by launching Maya using `iograft_env`:
