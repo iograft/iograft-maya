@@ -9,7 +9,7 @@ The Maya Subcore for iograft (`iogmaya_subcore`) defines an iograft Subcore for 
 The main components of the Maya Subcore are:
 - Calls `maya.standalone.initialize()` to initialize the Maya environment prior to listening for node processing requests,
 - Calls `maya.standalone.uninitialize()` prior to exiting, and
-- Adds a custom node executor function so all nodes are processed in the main thread. See "Threading in Maya" below for more details.
+- Uses the `iograft.MainThreadSubcore` class to ensure that all nodes are executed in the main thread.
 
 
 ## iograft Plugin for Maya
@@ -61,6 +61,6 @@ To get around any threading issues, there are a couple of additions we can make 
 
 1. Nodes that execute Maya commands that may be unsafe in a threaded environment must apply the `@maya_main_thread` decorator to their `Process` function. When running iograft interactively in Maya, this decorator makes use of Maya's `executeInMainThreadWithResult` function to process the node in Maya's main thread.
 
-2. When processing Maya nodes in batch (i.e. when using the Maya Subcore), the `iogmaya_subcore` executes all nodes in the main thread. To do this, it creates a work queue of nodes to be processed and launches the normal `iograft.Subcore` object in a new thread. When node processing requests are received from the iograft Core (on the secondary thread), they are added to the work queue. Meanwhile, the main thread is simply looping through the work queue and processing any items that come in.
+2. When processing Maya nodes in batch (i.e. when using the Maya Subcore), the `iogmaya_subcore` executes all nodes in the main thread. To do this, it makes use of the `iograft.MainThreadSubcore` class which runs the primary `iograft.Subcore.ListenForWork` listener in a secondary thread while processing nodes in the main thread.
 
 Note: In practice, not all nodes need to be executed in the main thread, so hypothetically it would be possible to only execute certain nodes in the main thread, but for simplicity we execute all nodes in the main thread for now.

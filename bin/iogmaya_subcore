@@ -14,65 +14,8 @@
 # limitations under the License.
 
 import argparse
-import Queue
-import sys
-import threading
-
 import maya.standalone
-
 import iograft
-
-
-class NodeProcessEvent(threading._Event):
-    def __init__(self):
-        super(NodeProcessEvent, self).__init__()
-        self.exc_info = None
-
-    def setException(self, exc_info):
-        """
-        Set an exception associated with the execution of the node process
-        event. An exception implies that the node execution failed.
-        """
-        self.exc_info = exc_info
-
-    def wait(self):
-        """
-        Wait for the event to complete and return whether or
-        not the node process function raised an exception. If it did
-        raise an exception, re-raise the exception in the calling thread.
-        """
-        super(NodeProcessEvent, self).wait()
-
-        # Check for an exception and re-raise if it exists.
-        if self.exc_info:
-            import traceback
-            tb = traceback.format_exception(*self.exc_info)
-            raise iograft.NodeProcessException("".join(tb))
-
-            # In Python3, we will have access to this nice "with_traceback"
-            # functionality which is awesome because we can include
-            # the full traceback and not only a string of the traceback.
-            # raise self.exception.with_traceback(self.exc_info[2])
-
-
-def GetExecuteInMainThreadFunc(work_queue):
-    """
-    Wrapper to create an _executeInMainThread function, with the work queue
-    bound internally. Used so that the _executeInMainThread function
-    returned matches the expected signature for iograft executor functions.
-    """
-    def _executeInMainThread(node_creator_func, data_block):
-        # Create an Event to trigger that this node is done processing in the
-        # main thread.
-        result_event = NodeProcessEvent()
-
-        # Send the node work item to the main thread to be processed.
-        work_queue.put((node_creator_func, data_block, result_event))
-
-        # Wait for the node to finish processing.
-        result_event.wait()
-
-    return _executeInMainThread
 
 
 def parse_args():
@@ -82,50 +25,23 @@ def parse_args():
     return parser.parse_args()
 
 
-def _RunSubcore(core_address):
-    subcore = iograft.Subcore(core_address)
-    subcore.ListenForWork()
-
-
 def StartSubcore(core_address):
     # Initialize Maya.
     maya.standalone.initialize()
 
-    # In Maya, we must process all nodes in the main thread because some of
-    # the Maya functionality does not work as expected when running in
-    # another thread.
-    # Create a queue to receive work items to be processed.
-    work_queue = Queue.Queue()
-
     # Initialize iograft.
-    iograft.Initialize(node_executor=GetExecuteInMainThreadFunc(work_queue))
+    iograft.Initialize()
 
-    # Start the subcore (in a separate thread so that the execute function
-    # can run in the main thread).
-    subcore_thread = threading.Thread(target=_RunSubcore, args=(core_address,))
-    subcore_thread.start()
+    # Create the Subcore object and listen for nodes to be processed. Use
+    # the MainThreadSubcore to ensure that all nodes are executed in the
+    # main thread.
+    subcore = iograft.MainThreadSubcore(core_address)
+    subcore.ListenForWork()
 
-    while subcore_thread.is_alive():
-        try:
-            node_creator, data_block, result_event = work_queue.get(True, 1)
-        except Queue.Empty:
-            continue
-
-        # Execute the function.
-        try:
-            iograft._ExecuteNode(node_creator, data_block)
-        except Exception:
-            # Catch *almost* any exception here because we don't know
-            # what might be happening inside the node code. If the
-            result_event.setException(sys.exc_info())
-
-        # When complete, send the message back to the thread that triggered
-        # the work, and mark the work as done.
-        result_event.set()
-        work_queue.task_done()
-
-    # Shutdown everything.
+    # Uninitialize iograft.
     iograft.Uninitialize()
+
+    # Uninitialize Maya.
     maya.standalone.uninitialize()
 
 
