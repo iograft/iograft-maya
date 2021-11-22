@@ -203,7 +203,7 @@ class SetNodeInputValue(OpenMaya.MPxCommand):
     kNodeNameLongFlag = "-nodename"
 
     kInputNameFlag = "-i"
-    kInputNameLongFlag = "-input"
+    kInputNameLongFlag = "-inputname"
 
     kValueFlag = "-v"
     kValueLongFlag = "-value"
