@@ -2,6 +2,22 @@
 
 This repository contains scripts and nodes for running iograft within Autodesk Maya. It includes a Maya Subcore command, an iograft Plugin for Maya, and a few example iograft Maya nodes.
 
+## Getting Started with a Maya Environment
+
+Below are the steps required to setup a new environment in iograft for executing nodes in Maya. These steps are also available in the
+iograft [Environment Quick Start Guide](https://docs.iograft.com/getting-started/guides/creating-a-new-environment):
+
+1. Clone the iograft-maya repository.
+2. Open the iograft Environment Manager and create a new environment for Maya (i.e. "maya2022").
+3. Update the **Plugin Path** to include the "nodes" directory of the iograft-maya repository.
+4. Update the **Subcore Launch Command** to "iogmaya_subcore" (matching the subcore executor name in the bin folder of the iograft-maya repository). Note: On Windows this will automatically resolve to the "iogmaya_subcore.bat" script.
+5. Update the **Path** to include the "bin" directory of the iograft-maya repository.
+6. Update the **Path** to include the directory containing the Maya executable and the mayapy executable.
+7. Update the **Python Path** to include the "python" directory of the iograft-maya repository.
+8. Depending on the version of Maya, update the **Python Path** entry for `...\iograft\python39` to the correct version of Python. (For Maya 2020: python27; for Maya 2022: python37).
+9. OPTIONAL: Add an **Environment Variable** for the `MAYA_PLUG_IN_PATH` so the iograft Maya plugin is available within Maya.
+10. Save the environment, use the Environment menu to switch to the Maya environment just created, and start creating Maya nodes.
+
 ## Maya Subcore for iograft
 
 The Maya Subcore for iograft (`iogmaya_subcore`) defines an iograft Subcore for executing nodes in the Maya environment.
