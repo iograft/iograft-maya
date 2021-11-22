@@ -1,4 +1,4 @@
-# iograft-maya
+# iograft for Autodesk Maya
 
 This repository contains a scripts and nodes for running iograft within Autodesk Maya. It includes a Maya Subcore command, an iograft Plugin for Maya, and a few example iograft Maya nodes.
 
