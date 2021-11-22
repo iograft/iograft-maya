@@ -25,6 +25,22 @@ Used to shutdown the iograft session within Maya.
 3. `iograft_ui` -
 Launch the iograft UI as a subprocess and connect to the iograft Core running inside of Maya. Note: The UI runs in a completely separate process and not internally in Maya. Only the iograft Core runs inside of Maya.
 
+The following commands are used to interact with the state of the iograft Core.
+These are loose wrappers around the Core's Python API that allow for
+calling those function's on the iograft Core object running within Maya.
+
+4. `iograft_load` -
+Used to load a graph file into the iograft Core. Loose wrapper around the `iograft.Core.LoadGraph` function. Takes a single argument which is the path to the .iog file to load. Ex: `iograft_load -f /path/to/file.iog`
+
+5. `iograft_set_input` -
+Used to set the "user" input value for a node within the loaded graph. Loose wrapper around the `iograft.Core.SetNodeInputValue` function. Takes three arguments:
+- `-n/-nodename` - Name of the node to set the value on.
+- `-i/-inputname` - Name of the input to set the value on.
+- `-v/-value` - String representation of the value to set for the node input. This will be converted (if possible) to the correct underlying type.
+
+6. `iograft_execute` -
+Start the execution of the loaded graph.
+
 
 ## Launching Maya with an iograft Environment Set
 
