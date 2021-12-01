@@ -68,7 +68,7 @@ To launch Maya and set the environment so iograft can run, we need to let iograf
 
 The iograft_env command first initializes environment variables based on the settings from the iograft environment named "maya2020", and then launches Maya.
 
-Note: iograft_env does not have to be used to start Maya, but it is quick way to ensure that the environment you are running in matches one of your defined iograft environments. If you prefer, you could setup the environment manually and simply set the IOGRAFT_ENV environment variable to the name of the iograft environment you set. The important thing is that we tell iograft which environment we are currently in.
+*Note: iograft_env does not have to be used to start Maya, but it is quick way to ensure that the environment you are running in matches one of your defined iograft environments. If you prefer, you could setup the environment manually and simply set the IOGRAFT_ENV environment variable to the name of the iograft environment you set. The important thing is that we tell iograft which environment we are currently in.*
 
 
 ## Threading in Maya
