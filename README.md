@@ -41,7 +41,7 @@ Used to shutdown the iograft session within Maya.
 3. `iograft_ui` -
 Launch the iograft UI as a subprocess and connect to the iograft Core running inside of Maya. Note: The UI runs in a completely separate process and not internally in Maya. Only the iograft Core runs inside of Maya.
 
-Note: The plugin also registers an iograft shelf named "iograft" which includes buttons that wrap the three commands listed above.
+*Note: The plugin also registers an iograft shelf named "iograft" which includes buttons that wrap the three commands listed above.*
 
 The following commands are used to interact with the state of the iograft Core.
 These are loose wrappers around the Core's Python API that allow for
@@ -81,4 +81,4 @@ To get around any threading issues, there are a couple of additions we can make 
 
 2. When processing Maya nodes in batch (i.e. when using the Maya Subcore), the `iogmaya_subcore` executes all nodes in the main thread. To do this, it makes use of the `iograft.MainThreadSubcore` class which runs the primary `iograft.Subcore.ListenForWork` listener in a secondary thread while processing nodes in the main thread.
 
-Note: In practice, not all nodes need to be executed in the main thread, so hypothetically it would be possible to only execute certain nodes in the main thread, but for simplicity we execute all nodes in the main thread for now.
+*Note: In practice, not all nodes need to be executed in the main thread, so hypothetically it would be possible to only execute certain nodes in the main thread, but for simplicity we execute all nodes in the main thread for now.*
