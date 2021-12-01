@@ -52,9 +52,9 @@ Used to load a graph file into the iograft Core. Loose wrapper around the `iogra
 
 5. `iograft_set_input` -
 Used to set the "user" input value for a node within the loaded graph. Loose wrapper around the `iograft.Core.SetNodeInputValue` function. Takes three arguments:
-- `-n/-nodename` - Name of the node to set the value on.
-- `-i/-inputname` - Name of the input to set the value on.
-- `-v/-value` - String representation of the value to set for the node input. This will be converted (if possible) to the correct underlying type.
+  - `-n/-nodename` - Name of the node to set the value on.
+  - `-i/-inputname` - Name of the input to set the value on.
+  - `-v/-value` - String representation of the value to set for the node input. This will be converted (if possible) to the correct underlying type.
 
 6. `iograft_execute` -
 Start the execution of the loaded graph.
