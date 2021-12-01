@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import sys
 
 import maya.api.OpenMaya as OpenMaya
+import maya.cmds
+import maya.mel
 
 import iograft
 
@@ -24,6 +27,91 @@ def maya_useNewAPI():
 
 
 iograftMayaVersion = "0.9"
+iograftShelfName = "iograft"
+iograftIconPath = "iograft_icon.png"
+iograftShelfButtons = {
+    "start_iograft": {
+        "label": "start_iograft",
+        "command": "loadPlugin \"iograftmaya.py\";\nstart_iograft",
+        "sourceType": "mel",
+        "annotation": "Start iograft",
+        "enableCommandRepeat": 0,
+        "commandRepeatable": 0,
+        "imageOverlayLabel": "start",
+        "overlayLabelColor": (0.8, 0.8, 0.8),
+        "useAlpha": 1,
+        "overlayLabelBackColor": (0, 0, 0, 0.8),
+        "style": "iconOnly"
+    },
+    "stop_iograft": {
+        "label": "stop_iograft",
+        "command": "loadPlugin \"iograftmaya.py\";\nstop_iograft",
+        "sourceType": "mel",
+        "annotation": "Stop iograft",
+        "enableCommandRepeat": 0,
+        "commandRepeatable": 0,
+        "imageOverlayLabel": "stop",
+        "overlayLabelColor": (0.8, 0.8, 0.8),
+        "useAlpha": 1,
+        "overlayLabelBackColor": (0, 0, 0, 0.8),
+        "style": "iconOnly"
+    },
+    "iograft_ui": {
+        "label": "iograft_ui",
+        "command": "loadPlugin \"iograftmaya.py\";\niograft_ui",
+        "sourceType": "mel",
+        "annotation": "Launch iograft_ui",
+        "enableCommandRepeat": 0,
+        "commandRepeatable": 0,
+        "imageOverlayLabel": "ui",
+        "overlayLabelColor": (0.8, 0.8, 0.8),
+        "useAlpha": 1,
+        "overlayLabelBackColor": (0, 0, 0, 0.8),
+        "style": "iconOnly"
+    }
+}
+
+
+# Clear the iograft shelf.
+def _clearShelf(delete_if_empty=True):
+    if not maya.cmds.shelfLayout(iograftShelfName, exists=1):
+        return
+
+    shelf_items = maya.cmds.shelfLayout(iograftShelfName, q=1, ca=1) or []
+    item_labels = [maya.cmds.shelfButton(i, q=1, label=1) for i in shelf_items]
+    num_removed = 0
+    for registered_button in iograftShelfButtons.keys():
+        try:
+            button_index = item_labels.index(registered_button)
+        except ValueError:
+            # Button not on the shelf.
+            continue
+
+        # Remove the button.
+        maya.cmds.deleteUI(shelf_items[button_index])
+        num_removed = num_removed + 1
+
+    # If the shelf is now empty, remove it.
+    if num_removed == len(shelf_items) and delete_if_empty:
+        maya.cmds.deleteUI(iograftShelfName)
+
+
+# Build the iograft default shelf.
+def _buildShelf(loadPath):
+    if maya.cmds.shelfLayout(iograftShelfName, exists=1):
+        _clearShelf(delete_if_empty=False)
+    else:
+        # Create the shelf.
+        top_level_shelf = maya.mel.eval("$tmpVar=$gShelfTopLevel")
+        maya.cmds.shelfLayout(iograftShelfName, parent=top_level_shelf)
+
+    # Create all of the registered buttons.
+    resources_dir = os.path.join(loadPath, "resources")
+    for button in iograftShelfButtons:
+        maya.cmds.shelfButton(parent=iograftShelfName,
+                              image=os.path.join(resources_dir,
+                                                 iograftIconPath),
+                              **iograftShelfButtons[button])
 
 
 # Keep track of the iograft state and preserve this across scenes. Only
@@ -43,7 +131,7 @@ def _getState():
 
 
 class StartIograftCommand(OpenMaya.MPxCommand):
-    kPluginCmdName = "startiograft"
+    kPluginCmdName = "start_iograft"
 
     def __init__(self):
         OpenMaya.MPxCommand.__init__(self)
@@ -83,7 +171,7 @@ class StartIograftCommand(OpenMaya.MPxCommand):
 
 
 class StopIograftCommand(OpenMaya.MPxCommand):
-    kPluginCmdName = "stopiograft"
+    kPluginCmdName = "stop_iograft"
 
     def __init__(self):
         OpenMaya.MPxCommand.__init__(self)
@@ -289,6 +377,13 @@ def initializePlugin(plugin):
         sys.stderr.write("Failed to register iograft commands.\n")
         raise
 
+    # Register the iograft shelf.
+    try:
+        _buildShelf(pluginFn.loadPath())
+    except:
+        sys.stderr.write("Failed to add iograft shelf.\n")
+        raise
+
 
 def uninitializePlugin(plugin):
     pluginFn = OpenMaya.MFnPlugin(plugin,
@@ -301,4 +396,11 @@ def uninitializePlugin(plugin):
         pluginFn.deregisterCommand(LaunchIograftUI.kPluginCmdName)
     except:
         sys.stderr.write("Failed to unregister iograft commands.\n")
+        raise
+
+    # Deregister the iograft shelf.
+    try:
+        _clearShelf(delete_if_empty=True)
+    except:
+        sys.stderr.write("Failed to remove iograft shelf.\n")
         raise

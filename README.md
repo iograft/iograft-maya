@@ -32,14 +32,16 @@ The main components of the Maya Subcore are:
 
 The iograft Plugin for Maya (iograftmaya.py) allows iograft to be run from inside an interactive Maya session. The plugin registers 3 MEL commands:
 
-1. `startiograft` -
+1. `start_iograft` -
 Used to initialize a local iograft session within Maya. Starts an iograft Core using the builtin Maya Python interpreter. A UI session can be connected to this iograft Core for graph authoring and monitoring.
 
-2. `stopiograft` -
+2. `stop_iograft` -
 Used to shutdown the iograft session within Maya.
 
 3. `iograft_ui` -
 Launch the iograft UI as a subprocess and connect to the iograft Core running inside of Maya. Note: The UI runs in a completely separate process and not internally in Maya. Only the iograft Core runs inside of Maya.
+
+Note: The plugin also registers an iograft shelf named "iograft" which includes buttons that wrap the three commands listed above.
 
 The following commands are used to interact with the state of the iograft Core.
 These are loose wrappers around the Core's Python API that allow for
