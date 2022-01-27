@@ -72,7 +72,7 @@ The iograft_env command first initializes environment variables based on the set
 
 *Note: iograft_env does not have to be used to start Maya, but it is quick way to ensure that the environment you are running in matches one of your defined iograft environments. If you prefer, you could setup the environment manually and simply set the IOGRAFT_ENV environment variable to the name of the iograft environment you set. The important thing is that we tell iograft which environment we are currently in.*
 
-## userSetup.py
+### userSetup.py
 
 Starting in iograft version 0.9.6, we have access to the `iograft.InitializeEnvironment(environment_name)` API call. This call initializes all of the environment variables based on the settings from an iograft environment in the current Python session. This function can be used within Maya's userSetup.py script to configure Maya to use iograft:
 
