@@ -62,13 +62,51 @@ Start the execution of the loaded graph.
 
 ## Launching Maya with an iograft Environment Set
 
-To launch Maya and set the environment so iograft can run, we need to let iograft know which environment we are in. This can be done by launching Maya using `iograft_env`:
+To launch Maya and set the environment so iograft can run, we need to let iograft know which environment we are in. This can be done either by launching Maya using `iograft_env` or by initializing the environment in a Maya userSetup.py script:
+
+### iograft_env
 
 `iograft_env -e maya2020 -c maya`
 
 The iograft_env command first initializes environment variables based on the settings from the iograft environment named "maya2020", and then launches Maya.
 
 *Note: iograft_env does not have to be used to start Maya, but it is quick way to ensure that the environment you are running in matches one of your defined iograft environments. If you prefer, you could setup the environment manually and simply set the IOGRAFT_ENV environment variable to the name of the iograft environment you set. The important thing is that we tell iograft which environment we are currently in.*
+
+## userSetup.py
+
+Starting in iograft version 0.9.6, we have access to the `iograft.InitializeEnvironment(environment_name)` API call. This call initializes all of the environment variables based on the settings from an iograft environment in the current Python session. This function can be used within Maya's userSetup.py script to configure Maya to use iograft:
+
+```
+# Ensure that the iograft python modules can be found. 
+# NOTE: This path can also be set in a Maya.env file.
+import os
+import sys
+IOGRAFT_PYTHON_PATH = "C:/Program Files/iograft/python27"
+if IOGRAFT_PYTHON_PATH not in sys.path:
+    sys.path.append(IOGRAFT_PYTHON_PATH)
+
+# Initialize an environment named "maya2020"
+import iograft
+environment_name = "maya2020"
+try:
+    iograft.InitializeEnvironment(environment_name)
+except KeyError as e:
+    print("Failed to initialize iograft environment: {}: {}".format(
+                                                        environment_name, e))
+                                                        
+# Ensure that the MAYA_PLUG_IN_PATH contains the plugins directory of the
+# iograft-maya repository.
+# NOTE: This can also be set in a Maya.env file.
+plugin_paths = os.environ.get("MAYA_PLUG_IN_PATH", "").split(";")
+IOGRAFT_MAYA_PLUGIN_PATH = "C:/Users/dtkno/Projects/iograft-public/iograft-maya/plugins"
+if IOGRAFT_MAYA_PLUGIN_PATH not in plugin_paths:
+    plugin_paths.append(IOGRAFT_MAYA_PLUGIN_PATH)
+    os.environ["MAYA_PLUG_IN_PATH"] = ";".join(plugin_paths)
+```
+
+Initializing iograft using this method has the benefit that Maya can be launched without needing the wrapper `iograft_env` script (i.e. via an Application icon click).
+
+Note: importing iograft in the userSetup.py requires that the iograft python modules are on the current PYTHONPATH. In addition, on Windows the PATH must contain the iograft 'bin' directory. Some possible options for setting this state is either to update the PATH and PYTHONPATH in a **Maya.env** file, within the userSetup.py script itself, or globally in the system's environment variables.
 
 
 ## Threading in Maya
