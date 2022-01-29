@@ -9,11 +9,11 @@ iograft [Environment Quick Start Guide](https://docs.iograft.com/getting-started
 
 1. Clone the iograft-maya repository.
 2. Open the iograft Environment Manager and create a new environment for Maya (i.e. "maya2022").
-3. Update the **Plugin Path** to include the "nodes" directory of the iograft-maya repository.
+3. Add the "nodes" directory of the iograft-maya repository to the **Plugin Path**.
 4. Update the **Subcore Launch Command** to "iogmaya_subcore" (matching the subcore executor name in the bin folder of the iograft-maya repository). Note: On Windows this will automatically resolve to the "iogmaya_subcore.bat" script.
-5. Update the **Path** to include the "bin" directory of the iograft-maya repository.
-6. Update the **Path** to include the directory containing the Maya executable and the mayapy executable.
-7. Update the **Python Path** to include the "python" directory of the iograft-maya repository.
+5. Add the "bin" directory of the iograft-maya respository to the **Path**.
+6. Add Maya's "bin" directory to the **Path** (the directory containing the Maya executable and the mayapy executable).
+7. Add the "python" directory of the iograft-maya respository the **Python Path**.
 8. Depending on the version of Maya, update the **Python Path** entry for `...\iograft\python39` by switching "python39" to the directory for the correct version of Python. (For Maya 2020: "python27"; for Maya 2022: "python37").
 9. OPTIONAL: Add an **Environment Variable** for the `MAYA_PLUG_IN_PATH` so the iograft Maya plugin is available within Maya: Key: `MAYA_PLUG_IN_PATH`, Value: the path to the "plugins" directory of the iograft-maya repository.
 10. Save the environment, use the Environment menu to switch to the Maya environment just created, and start creating Maya nodes.
