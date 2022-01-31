@@ -56,6 +56,11 @@ Used to set the "user" input value for a node within the loaded graph. Loose wra
     - `-i/-inputname` - Name of the input to set the value on.
     - `-v/-value` - String representation of the value to set for the node input. This will be converted (if possible) to the correct underlying type.
 
+6. `iograft_set_graph_input` -
+Used to set a "user" input value for a graph input in the loaded graph. Loose wrapper around the `iograft.Core.SetGraphInputValue` function. Takes two arguments:
+    - `-i/-inputname` - Name of the graph input to set the value of.
+    - `-v/-value` - String representation of the value to set for the graph input. This will be converted (if possible) to the correct underlying type.
+
 6. `iograft_execute` -
 Start the execution of the loaded graph.
 
@@ -77,7 +82,7 @@ The iograft_env command first initializes environment variables based on the set
 Starting in iograft version 0.9.6, we have access to the `iograft.InitializeEnvironment(environment_name)` API call. This call initializes all of the environment variables based on the settings from an iograft environment in the current Python session. This function can be used within Maya's userSetup.py script to configure Maya to use iograft:
 
 ```
-# Ensure that the iograft python modules can be found. 
+# Ensure that the iograft python modules can be found.
 # NOTE: This path can also be set in a Maya.env file.
 import os
 import sys
@@ -93,7 +98,7 @@ try:
 except KeyError as e:
     print("Failed to initialize iograft environment: {}: {}".format(
                                                         environment_name, e))
-                                                        
+
 # Ensure that the MAYA_PLUG_IN_PATH contains the plugins directory of the
 # iograft-maya repository.
 # NOTE: This can also be set in a Maya.env file.

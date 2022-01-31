@@ -282,8 +282,6 @@ class ExecuteGraphCommand(OpenMaya.MPxCommand):
         state._core.StartGraphProcessing()
 
 
-# This command allows for the execution of an iograft graph directly
-# in Maya; it is "blocking" and does not allow for editing the graph
 class SetNodeInputValue(OpenMaya.MPxCommand):
     kPluginCmdName = "iograft_set_input"
 
@@ -326,7 +324,6 @@ class SetNodeInputValue(OpenMaya.MPxCommand):
                                 "No iograft instance currently running.")
             return
 
-        # Load the requested graph.
         if not argData.isFlagSet(self.kNodeNameFlag):
             OpenMaya.MGlobal.displayWarning("The node name flag is required.")
             return
@@ -348,6 +345,60 @@ class SetNodeInputValue(OpenMaya.MPxCommand):
             OpenMaya.MGlobal.displayError("Setting node input failed.")
         else:
             OpenMaya.MGlobal.displayInfo("Setting node input was successful.")
+
+
+class SetGraphInputValue(OpenMaya.MPxCommand):
+    kPluginCmdName = "iograft_set_graph_input"
+
+    kInputNameFlag = "-i"
+    kInputNameLongFlag = "-inputname"
+
+    kValueFlag = "-v"
+    kValueLongFlag = "-value"
+
+    def __init__(self):
+        OpenMaya.MPxCommand.__init__(self)
+
+    @staticmethod
+    def cmdCreator():
+        return SetGraphInputValue()
+
+    @classmethod
+    def syntaxCreator(cls):
+        syntax = OpenMaya.MSyntax()
+        syntax.addFlag(cls.kInputNameFlag,
+                       cls.kInputNameLongFlag,
+                       OpenMaya.MSyntax.kString)
+        syntax.addFlag(cls.kValueFlag,
+                       cls.kValueLongFlag,
+                       OpenMaya.MSyntax.kString)
+        return syntax
+
+    def doIt(self, args):
+        argData = OpenMaya.MArgDatabase(self.syntax(), args)
+
+        state = _getState()
+        if state._core is None:
+            OpenMaya.MGlobal.displayWarning(
+                                "No iograft instance currently running.")
+            return
+
+        if not argData.isFlagSet(self.kInputNameFlag):
+            OpenMaya.MGlobal.displayWarning("The input name flag is required.")
+            return
+        input_name = argData.flagArgumentString(self.kInputNameFlag, 0)
+
+        if not argData.isFlagSet(self.kValueFlag):
+            OpenMaya.MGlobal.displayWarning("The value flag is required.")
+            return
+        value = argData.flagArgumentString(self.kValueFlag, 0)
+
+        # Set the value.
+        result = state._core.SetGraphInputValue(input_name, value)
+        if not result:
+            OpenMaya.MGlobal.displayError("Setting graph input failed.")
+        else:
+            OpenMaya.MGlobal.displayInfo("Setting graph input was successful.")
 
 
 def initializePlugin(plugin):
@@ -372,6 +423,9 @@ def initializePlugin(plugin):
         pluginFn.registerCommand(SetNodeInputValue.kPluginCmdName,
                                  SetNodeInputValue.cmdCreator,
                                  SetNodeInputValue.syntaxCreator)
+        pluginFn.registerCommand(SetGraphInputValue.kPluginCmdName,
+                                 SetGraphInputValue.cmdCreator,
+                                 SetGraphInputValue.syntaxCreator)
 
     except:
         sys.stderr.write("Failed to register iograft commands.\n")
@@ -394,6 +448,10 @@ def uninitializePlugin(plugin):
         pluginFn.deregisterCommand(StartIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(StopIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(LaunchIograftUI.kPluginCmdName)
+        pluginFn.deregisterCommand(LoadGraphCommand.kPluginCmdName)
+        pluginFn.deregisterCommand(ExecuteGraphCommand.kPluginCmdName)
+        pluginFn.deregisterCommand(SetNodeInputValue.kPluginCmdName)
+        pluginFn.deregisterCommand(SetGraphInputValue.kPluginCmdName)
     except:
         sys.stderr.write("Failed to unregister iograft commands.\n")
         raise
