@@ -340,11 +340,8 @@ class SetNodeInputValue(OpenMaya.MPxCommand):
         value = argData.flagArgumentString(self.kValueFlag, 0)
 
         # Set the value.
-        result = state._core.SetNodeInputValue(node_name, input_name, value)
-        if not result:
-            OpenMaya.MGlobal.displayError("Setting node input failed.")
-        else:
-            OpenMaya.MGlobal.displayInfo("Setting node input was successful.")
+        state._core.SetNodeInputValue(node_name, input_name, value)
+        OpenMaya.MGlobal.displayInfo("Setting node input was successful.")
 
 
 class SetGraphInputValue(OpenMaya.MPxCommand):
@@ -394,11 +391,8 @@ class SetGraphInputValue(OpenMaya.MPxCommand):
         value = argData.flagArgumentString(self.kValueFlag, 0)
 
         # Set the value.
-        result = state._core.SetGraphInputValue(input_name, value)
-        if not result:
-            OpenMaya.MGlobal.displayError("Setting graph input failed.")
-        else:
-            OpenMaya.MGlobal.displayInfo("Setting graph input was successful.")
+        state._core.SetGraphInputValue(input_name, value)
+        OpenMaya.MGlobal.displayInfo("Setting graph input was successful.")
 
 
 def initializePlugin(plugin):
