@@ -215,7 +215,14 @@ class LaunchIograftUI(OpenMaya.MPxCommand):
                                 "No iograft instance currently running.")
             return
 
-        subprocess.Popen(["iograft_ui", "-c", state._core.GetClientAddress()])
+        # Remove LD_LIBRARY_PATH from the environment to avoid conflicts
+        # with Qt library paths.
+        sub_env = os.environ.copy()
+        sub_env.pop("LD_LIBRARY_PATH", None)
+
+        # Launch the iograft_ui subprocess.
+        subprocess.Popen(["iograft_ui", "-c", state._core.GetClientAddress()],
+                         env=sub_env)
         OpenMaya.MGlobal.displayInfo("iograft_ui launched.")
 
 
