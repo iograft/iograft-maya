@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import platform
 import sys
 
 import maya.api.OpenMaya as OpenMaya
@@ -215,8 +216,25 @@ class LaunchIograftUI(OpenMaya.MPxCommand):
                                 "No iograft instance currently running.")
             return
 
-        # Launch the iograft_ui subprocess.
-        subprocess.Popen(["iograft_ui", "-c", state._core.GetClientAddress()])
+        # On Linux platforms, prior to launching the iograft_ui, we must
+        # clear the LD_LIBRARY_PATH to prevent the Qt libraries of Maya
+        # conflicting with iograft's Qt libraries.
+        # TODO(knowlonix): This can apply to ALL platforms once the unicode
+        # environment errors are resolved in iograft.InitializeEnvironment()
+        if platform.system() == "Linux":
+            sub_env = os.environ.copy()
+            sub_env.pop("LD_LIBRARY_PATH", None)
+
+            # Launch the iograft_ui subprocess.
+            subprocess.Popen(["iograft_ui", "-c",
+                              state._core.GetClientAddress()],
+                             env=sub_env)
+        else:
+            # Launch the iograft_ui subprocess.
+            subprocess.Popen(["iograft_ui", "-c",
+                              state._core.GetClientAddress()])
+
+
         OpenMaya.MGlobal.displayInfo("iograft_ui launched.")
 
 
