@@ -1,4 +1,4 @@
-# Copyright 2021 Fabrica Software, LLC
+# Copyright 2022 Fabrica Software, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,20 +115,8 @@ def _buildShelf(loadPath):
                               **iograftShelfButtons[button])
 
 
-# Keep track of the iograft state and preserve this across scenes. Only
-# a single iograft core should be running within Maya at one time.
-class _iograftState(object):
-    _instance = None
-
-    def __init__(self):
-        self._initialized = False
-        self._core = None
-
-
-def _getState():
-    if not _iograftState._instance:
-        _iograftState._instance = _iograftState()
-    return _iograftState._instance
+# The name of the Core object to be registered for the Maya session.
+IOGRAFT_MAYA_CORE_NAME = "maya"
 
 
 class StartIograftCommand(OpenMaya.MPxCommand):
@@ -141,34 +129,25 @@ class StartIograftCommand(OpenMaya.MPxCommand):
     def cmdCreator():
         return StartIograftCommand()
 
-    def _configure(self):
-        """
-        Run some configuration steps to ensure iograft can execute nodes
-        within Maya.
-        """
-        # Initialize the iograft system.
-        iograft.Initialize()
-
     def doIt(self, args):
-        state = _getState()
+        # Initialize iograft if it is not yet initialized.
+        if not iograft.IsInitialized():
+            iograft.Initialize()
 
-        # Check if iograft is already running.
-        if state._core is not None:
-            iograft_address = state._core.GetClientAddress()
-            OpenMaya.MGlobal.displayWarning(
-                            "iograft already running at: " + iograft_address)
-            return
+        # Ensure there is a "maya" iograft Core object created and setup
+        # to handle requests.
+        core = iograft.Core()
+        iograft.RegisterCore(IOGRAFT_MAYA_CORE_NAME, core)
 
-        # Ensure that iograft has been configure to run in Maya.
-        if not state._initialized:
-            self._configure()
-            state._initialized = True
+        # Ensure that the core's request handler is active so we can
+        # connect a UI to it.
+        core.StartRequestHandler()
 
-        # Launch iograft.
-        state._core = iograft.Core()
-        state._core.StartRequestHandler()
-        iograft_address = state._core.GetClientAddress()
-        OpenMaya.MGlobal.displayInfo("iograft started at: " + iograft_address)
+        # Get the core address that clients (such as a UI) can connect to.
+        core_address = core.GetClientAddress()
+        OpenMaya.MGlobal.displayInfo("iograft Core: '{}' running at: {}".format(
+                                        IOGRAFT_MAYA_CORE_NAME,
+                                        core_address))
 
 
 class StopIograftCommand(OpenMaya.MPxCommand):
@@ -182,19 +161,20 @@ class StopIograftCommand(OpenMaya.MPxCommand):
         return StopIograftCommand()
 
     def doIt(self, args):
-        state = _getState()
-        if state._core is None:
+        # If iograft is not initialized, nothing to do.
+        if not iograft.IsInitialized():
             OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
+                            "The iograft API is not currently initialized.")
             return
 
-        # Clear the iograft core.
-        state._core = None
+        # Otherwise, clear the "maya" Core object and uninitialize iograft.
+        try:
+            iograft.UnregisterCore(IOGRAFT_MAYA_CORE_NAME)
+        except KeyError:
+            pass
 
-        # Uninitialize iograft.
         iograft.Uninitialize()
-        state._initialized = False
-        OpenMaya.MGlobal.displayInfo("iograft stopped.")
+        OpenMaya.MGlobal.displayInfo("The iograft API has been uninitialized.")
 
 
 class LaunchIograftUI(OpenMaya.MPxCommand):
@@ -210,10 +190,22 @@ class LaunchIograftUI(OpenMaya.MPxCommand):
     def doIt(self, args):
         import subprocess
 
-        state = _getState()
-        if state._core is None:
+        # Check that iograft is initialized.
+        if not iograft.IsInitialized():
             OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
+                            "The iograft API has not been initialized.")
+            return
+
+        # Try to get the "maya" Core object.
+        core_address = ""
+        try:
+            core = iograft.GetCore(IOGRAFT_MAYA_CORE_NAME,
+                                   create_if_needed=False)
+            core_address = core.GetClientAddress()
+        except KeyError:
+            OpenMaya.MGlobal.displayError("No iograft Core: '{}' is currently"
+                                          " running.".format(
+                                                    IOGRAFT_MAYA_CORE_NAME))
             return
 
         # On Linux platforms, prior to launching the iograft_ui, we must
@@ -226,192 +218,12 @@ class LaunchIograftUI(OpenMaya.MPxCommand):
             sub_env.pop("LD_LIBRARY_PATH", None)
 
             # Launch the iograft_ui subprocess.
-            subprocess.Popen(["iograft_ui", "-c",
-                              state._core.GetClientAddress()],
-                             env=sub_env)
+            subprocess.Popen(["iograft_ui", "-c", core_address], env=sub_env)
         else:
             # Launch the iograft_ui subprocess.
-            subprocess.Popen(["iograft_ui", "-c",
-                              state._core.GetClientAddress()])
-
+            subprocess.Popen(["iograft_ui", "-c", core_address])
 
         OpenMaya.MGlobal.displayInfo("iograft_ui launched.")
-
-
-# This command allows for the execution of an iograft graph directly
-# in Maya; it is "blocking" and does not allow for editing the graph
-class LoadGraphCommand(OpenMaya.MPxCommand):
-    kPluginCmdName = "iograft_load"
-
-    kGraphFileFlag = "-f"
-    kGraphFileLongFlag = "-file"
-
-    def __init__(self):
-        OpenMaya.MPxCommand.__init__(self)
-
-    @staticmethod
-    def cmdCreator():
-        return LoadGraphCommand()
-
-    @classmethod
-    def syntaxCreator(cls):
-        syntax = OpenMaya.MSyntax()
-        syntax.addFlag(cls.kGraphFileFlag,
-                       cls.kGraphFileLongFlag,
-                       OpenMaya.MSyntax.kString)
-        return syntax
-
-    def doIt(self, args):
-        argData = OpenMaya.MArgDatabase(self.syntax(), args)
-
-        state = _getState()
-        if state._core is None:
-            OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
-            return
-
-        # Load the requested graph.
-        if not argData.isFlagSet(self.kGraphFileFlag):
-            OpenMaya.MGlobal.displayWarning("The graph file arg is required.")
-            return
-        graph_file = argData.flagArgumentString(self.kGraphFileFlag, 0)
-        OpenMaya.MGlobal.displayInfo(
-                            "Loading iograft graph: {}".format(graph_file))
-        state._core.LoadGraph(graph_file)
-
-
-class ExecuteGraphCommand(OpenMaya.MPxCommand):
-    kPluginCmdName = "iograft_execute"
-
-    def __init__(self):
-        OpenMaya.MPxCommand.__init__(self)
-
-    @staticmethod
-    def cmdCreator():
-        return ExecuteGraphCommand()
-
-    def doIt(self, args):
-        state = _getState()
-        if state._core is None:
-            OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
-            return
-
-        # Start the graph processing.
-        state._core.StartGraphProcessing()
-
-
-class SetNodeInputValue(OpenMaya.MPxCommand):
-    kPluginCmdName = "iograft_set_input"
-
-    kNodeNameFlag = "-n"
-    kNodeNameLongFlag = "-nodename"
-
-    kInputNameFlag = "-i"
-    kInputNameLongFlag = "-inputname"
-
-    kValueFlag = "-v"
-    kValueLongFlag = "-value"
-
-    def __init__(self):
-        OpenMaya.MPxCommand.__init__(self)
-
-    @staticmethod
-    def cmdCreator():
-        return SetNodeInputValue()
-
-    @classmethod
-    def syntaxCreator(cls):
-        syntax = OpenMaya.MSyntax()
-        syntax.addFlag(cls.kNodeNameFlag,
-                       cls.kNodeNameLongFlag,
-                       OpenMaya.MSyntax.kString)
-        syntax.addFlag(cls.kInputNameFlag,
-                       cls.kInputNameLongFlag,
-                       OpenMaya.MSyntax.kString)
-        syntax.addFlag(cls.kValueFlag,
-                       cls.kValueLongFlag,
-                       OpenMaya.MSyntax.kString)
-        return syntax
-
-    def doIt(self, args):
-        argData = OpenMaya.MArgDatabase(self.syntax(), args)
-
-        state = _getState()
-        if state._core is None:
-            OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
-            return
-
-        if not argData.isFlagSet(self.kNodeNameFlag):
-            OpenMaya.MGlobal.displayWarning("The node name flag is required.")
-            return
-        node_name = argData.flagArgumentString(self.kNodeNameFlag, 0)
-
-        if not argData.isFlagSet(self.kInputNameFlag):
-            OpenMaya.MGlobal.displayWarning("The input name flag is required.")
-            return
-        input_name = argData.flagArgumentString(self.kInputNameFlag, 0)
-
-        if not argData.isFlagSet(self.kValueFlag):
-            OpenMaya.MGlobal.displayWarning("The value flag is required.")
-            return
-        value = argData.flagArgumentString(self.kValueFlag, 0)
-
-        # Set the value.
-        state._core.SetNodeInputValue(node_name, input_name, value)
-        OpenMaya.MGlobal.displayInfo("Setting node input was successful.")
-
-
-class SetGraphInputValue(OpenMaya.MPxCommand):
-    kPluginCmdName = "iograft_set_graph_input"
-
-    kInputNameFlag = "-i"
-    kInputNameLongFlag = "-inputname"
-
-    kValueFlag = "-v"
-    kValueLongFlag = "-value"
-
-    def __init__(self):
-        OpenMaya.MPxCommand.__init__(self)
-
-    @staticmethod
-    def cmdCreator():
-        return SetGraphInputValue()
-
-    @classmethod
-    def syntaxCreator(cls):
-        syntax = OpenMaya.MSyntax()
-        syntax.addFlag(cls.kInputNameFlag,
-                       cls.kInputNameLongFlag,
-                       OpenMaya.MSyntax.kString)
-        syntax.addFlag(cls.kValueFlag,
-                       cls.kValueLongFlag,
-                       OpenMaya.MSyntax.kString)
-        return syntax
-
-    def doIt(self, args):
-        argData = OpenMaya.MArgDatabase(self.syntax(), args)
-
-        state = _getState()
-        if state._core is None:
-            OpenMaya.MGlobal.displayWarning(
-                                "No iograft instance currently running.")
-            return
-
-        if not argData.isFlagSet(self.kInputNameFlag):
-            OpenMaya.MGlobal.displayWarning("The input name flag is required.")
-            return
-        input_name = argData.flagArgumentString(self.kInputNameFlag, 0)
-
-        if not argData.isFlagSet(self.kValueFlag):
-            OpenMaya.MGlobal.displayWarning("The value flag is required.")
-            return
-        value = argData.flagArgumentString(self.kValueFlag, 0)
-
-        # Set the value.
-        state._core.SetGraphInputValue(input_name, value)
-        OpenMaya.MGlobal.displayInfo("Setting graph input was successful.")
 
 
 def initializePlugin(plugin):
@@ -428,17 +240,6 @@ def initializePlugin(plugin):
                                  StopIograftCommand.cmdCreator)
         pluginFn.registerCommand(LaunchIograftUI.kPluginCmdName,
                                  LaunchIograftUI.cmdCreator)
-        pluginFn.registerCommand(LoadGraphCommand.kPluginCmdName,
-                                 LoadGraphCommand.cmdCreator,
-                                 LoadGraphCommand.syntaxCreator)
-        pluginFn.registerCommand(ExecuteGraphCommand.kPluginCmdName,
-                                 ExecuteGraphCommand.cmdCreator)
-        pluginFn.registerCommand(SetNodeInputValue.kPluginCmdName,
-                                 SetNodeInputValue.cmdCreator,
-                                 SetNodeInputValue.syntaxCreator)
-        pluginFn.registerCommand(SetGraphInputValue.kPluginCmdName,
-                                 SetGraphInputValue.cmdCreator,
-                                 SetGraphInputValue.syntaxCreator)
 
     except:
         sys.stderr.write("Failed to register iograft commands.\n")
@@ -461,10 +262,6 @@ def uninitializePlugin(plugin):
         pluginFn.deregisterCommand(StartIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(StopIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(LaunchIograftUI.kPluginCmdName)
-        pluginFn.deregisterCommand(LoadGraphCommand.kPluginCmdName)
-        pluginFn.deregisterCommand(ExecuteGraphCommand.kPluginCmdName)
-        pluginFn.deregisterCommand(SetNodeInputValue.kPluginCmdName)
-        pluginFn.deregisterCommand(SetGraphInputValue.kPluginCmdName)
     except:
         sys.stderr.write("Failed to unregister iograft commands.\n")
         raise
