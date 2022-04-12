@@ -136,8 +136,7 @@ class StartIograftCommand(OpenMaya.MPxCommand):
 
         # Ensure there is a "maya" iograft Core object created and setup
         # to handle requests.
-        core = iograft.Core()
-        iograft.RegisterCore(IOGRAFT_MAYA_CORE_NAME, core)
+        core = iograft.GetCore(IOGRAFT_MAYA_CORE_NAME, True)
 
         # Ensure that the core's request handler is active so we can
         # connect a UI to it.
