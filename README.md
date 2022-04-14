@@ -43,27 +43,16 @@ Launch the iograft UI as a subprocess and connect to the iograft Core running in
 
 *Note: The plugin also registers an iograft shelf named "iograft" which includes buttons that wrap the three commands listed above.*
 
-The following commands are used to interact with the state of the iograft Core.
-These are loose wrappers around the Core's Python API that allow for
-calling those function's on the iograft Core object running within Maya.
+All other operations for interacting with the Core object should be completed using the iograft Python API.
 
-4. `iograft_load` -
-Used to load a graph file into the iograft Core. Loose wrapper around the `iograft.Core.LoadGraph` function. Takes a single argument which is the path to the .iog file to load. Ex: `iograft_load -f /path/to/file.iog`
+When `start_iograft` is executed, it registers a Core named "maya" that can be retrieved with the Python API as shown below:
 
-5. `iograft_set_input` -
-Used to set the "user" input value for a node within the loaded graph. Loose wrapper around the `iograft.Core.SetNodeInputValue` function. Takes three arguments:
-    - `-n/-nodename` - Name of the node to set the value on.
-    - `-i/-inputname` - Name of the input to set the value on.
-    - `-v/-value` - String representation of the value to set for the node input. This will be converted (if possible) to the correct underlying type.
+```
+import iograft
+core = iograft.GetCore("maya")
+```
 
-6. `iograft_set_graph_input` -
-Used to set a "user" input value for a graph input in the loaded graph. Loose wrapper around the `iograft.Core.SetGraphInputValue` function. Takes two arguments:
-    - `-i/-inputname` - Name of the graph input to set the value of.
-    - `-v/-value` - String representation of the value to set for the graph input. This will be converted (if possible) to the correct underlying type.
-
-6. `iograft_execute` -
-Start the execution of the loaded graph.
-
+Using the Python API, we have access to useful functionality on the Core such as loading graphs, setting input values on a graph, and processing the graph.
 
 ## Launching Maya with an iograft Environment Set
 
@@ -122,6 +111,8 @@ To get around any threading issues, there are a couple of additions we can make 
 
 1. Nodes that execute Maya commands that may be unsafe in a threaded environment must apply the `@maya_main_thread` decorator to their `Process` function. When running iograft interactively in Maya, this decorator makes use of Maya's `executeInMainThreadWithResult` function to process the node in Maya's main thread.
 
-2. When processing Maya nodes in batch (i.e. when using the Maya Subcore), the `iogmaya_subcore` executes all nodes in the main thread. To do this, it makes use of the `iograft.MainThreadSubcore` class which runs the primary `iograft.Subcore.ListenForWork` listener in a secondary thread while processing nodes in the main thread.
+2. To avoid blocking the main thread when processing graphs in an interactive Maya session, processing must be started with either the `StartGraphProcessing()` function which is non-blocking, or pass the `execute_in_main_thread` argument to `ProcessGraph(execute_in_main_thread=True)` to ensure that nodes that require the main thread can be completed successfully.
+
+3. When processing Maya nodes in batch (i.e. when using the Maya Subcore), the `iogmaya_subcore` executes all nodes in the main thread. To do this, it makes use of the `iograft.MainThreadSubcore` class which runs the primary `iograft.Subcore.ListenForWork` listener in a secondary thread while processing nodes in the main thread.
 
 *Note: In practice, not all nodes need to be executed in the main thread, so hypothetically it would be possible to only execute certain nodes in the main thread, but for simplicity we execute all nodes in the main thread for now.*
