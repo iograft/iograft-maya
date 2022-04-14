@@ -10,10 +10,10 @@ class OpenSceneMaya(iograft.Node):
     """
     Open an existing scene in Maya.
     """
-    filename = iograft.InputDefinition("filename", iobasictypes.String())
+    filename = iograft.InputDefinition("filename", iobasictypes.Path())
     force = iograft.InputDefinition("force", iobasictypes.Bool(),
                                     default_value=True)
-    out_filename = iograft.OutputDefinition("filename", iobasictypes.String())
+    out_filename = iograft.OutputDefinition("filename", iobasictypes.Path())
 
     @classmethod
     def GetDefinition(cls):

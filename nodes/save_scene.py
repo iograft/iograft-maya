@@ -10,12 +10,12 @@ class SaveSceneMaya(iograft.Node):
     """
     Save a scene from Maya.
     """
-    filename = iograft.InputDefinition("file", iobasictypes.String())
+    filename = iograft.InputDefinition("file", iobasictypes.Path())
     filetype = iograft.InputDefinition("filetype", iobasictypes.String(),
                                        default_value="")
     force = iograft.InputDefinition("force", iobasictypes.Bool(),
                                     default_value=True)
-    out_filename = iograft.OutputDefinition("filename", iobasictypes.String())
+    out_filename = iograft.OutputDefinition("filename", iobasictypes.Path())
 
     @classmethod
     def GetDefinition(cls):

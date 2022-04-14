@@ -10,7 +10,7 @@ class ImportFileMaya(iograft.Node):
     """
     Import a file into Maya.
     """
-    filename = iograft.InputDefinition("filename", iobasictypes.String())
+    filename = iograft.InputDefinition("filename", iobasictypes.Path())
     namespace = iograft.InputDefinition("namespace", iobasictypes.String())
 
     imported_nodes = iograft.OutputDefinition("imported_nodes",
