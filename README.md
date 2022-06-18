@@ -47,7 +47,7 @@ All other operations for interacting with the Core object should be completed us
 
 When `start_iograft` is executed, it registers a Core named "maya" that can be retrieved with the Python API as shown below:
 
-```
+```python
 import iograft
 core = iograft.GetCore("maya")
 ```
@@ -70,7 +70,7 @@ The iograft_env command first initializes environment variables based on the set
 
 Starting in iograft version 0.9.6, we have access to the `iograft.InitializeEnvironment(environment_name)` API call. This call initializes all of the environment variables based on the settings from an iograft environment in the current Python session. This function can be used within Maya's userSetup.py script to configure Maya to use iograft:
 
-```
+```python
 # Ensure that the iograft python modules can be found.
 # NOTE: This path can also be set in a Maya.env file.
 import os
