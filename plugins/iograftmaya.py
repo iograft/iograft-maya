@@ -119,11 +119,44 @@ def _buildShelf(loadPath):
 IOGRAFT_MAYA_CORE_NAME = "maya"
 
 
+# Function to be used with at exit to ensure that iograft has been cleaned
+# up and doesn't prevent Maya from exiting.
+# Note: Maya does not handle Python's atexit functionality, so this must
+# be registered manually using Maya's Python API (addCallback).
+def _ensureUninitialized(callback_data):
+    try:
+        maya.cmds.stop_iograft()
+    except AttributeError:
+        pass
+
+
 class StartIograftCommand(OpenMaya.MPxCommand):
     kPluginCmdName = "start_iograft"
 
+    # Store the callback id of the Maya exit callback to stop iograft
+    # so it can be removed when iograft is unregistered.
+    exit_callback_id = None
+
     def __init__(self):
         OpenMaya.MPxCommand.__init__(self)
+
+    @classmethod
+    def addExitCallback(cls):
+        if cls.exit_callback_id is not None:
+            return
+
+        cls.exit_callback_id = OpenMaya.MSceneMessage.addCallback(
+                                        OpenMaya.MSceneMessage.kMayaExiting,
+                                        _ensureUninitialized)
+
+    @classmethod
+    def removeExitCallback(cls):
+        if cls.exit_callback_id is None:
+            return
+
+        # Remove the exit callback to uninitialize iograft.
+        OpenMaya.MMessage.removeCallback(cls.exit_callback_id)
+        cls.exit_callback_id = None
 
     @staticmethod
     def cmdCreator():
@@ -133,6 +166,10 @@ class StartIograftCommand(OpenMaya.MPxCommand):
         # Initialize iograft if it is not yet initialized.
         if not iograft.IsInitialized():
             iograft.Initialize()
+
+            # Add a callback on Maya exiting to ensure that iograft is
+            # uninitialized.
+            type(self).addExitCallback()
 
         # Ensure there is a "maya" iograft Core object created and setup
         # to handle requests.
@@ -173,6 +210,7 @@ class StopIograftCommand(OpenMaya.MPxCommand):
             pass
 
         iograft.Uninitialize()
+        StartIograftCommand.removeExitCallback()
         OpenMaya.MGlobal.displayInfo("The iograft API has been uninitialized.")
 
 
@@ -253,6 +291,9 @@ def uninitializePlugin(plugin):
                                   iograftMayaVersion,
                                   "Any")
     try:
+        # Ensure that iograft has been stopped.
+        maya.cmds.stop_iograft()
+
         pluginFn.deregisterCommand(StartIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(StopIograftCommand.kPluginCmdName)
         pluginFn.deregisterCommand(LaunchIograftUI.kPluginCmdName)
