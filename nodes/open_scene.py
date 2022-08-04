@@ -18,6 +18,7 @@ class OpenSceneMaya(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("open_scene_maya")
+        node.SetMenuPath("Maya")
         node.AddInput(cls.filename)
         node.AddInput(cls.force)
         node.AddOutput(cls.out_filename)

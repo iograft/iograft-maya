@@ -20,6 +20,7 @@ class SaveSceneMaya(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("save_scene_maya")
+        node.SetMenuPath("Maya")
         node.AddInput(SaveSceneMaya.filename)
         node.AddInput(SaveSceneMaya.filetype)
         node.AddInput(SaveSceneMaya.force)

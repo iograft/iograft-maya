@@ -19,6 +19,7 @@ class ImportFileMaya(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("import_file_maya")
+        node.SetMenuPath("Maya")
         node.AddInput(cls.filename)
         node.AddInput(cls.namespace)
         node.AddOutput(cls.imported_nodes)

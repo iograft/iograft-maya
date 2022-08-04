@@ -103,6 +103,7 @@ class WaitForUser(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("wait_for_user")
+        node.SetMenuPath("Maya")
         node.AddInput(cls.title)
         node.AddInput(cls.message)
         node.AddInput(cls.ok_button_text)

@@ -18,6 +18,7 @@ class GetRootTransformsMaya(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("get_root_transforms")
+        node.SetMenuPath("Maya")
         node.AddInput(cls.nodes)
         node.AddOutput(cls.root_transforms)
         return node

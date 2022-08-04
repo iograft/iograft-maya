@@ -18,6 +18,7 @@ class NewSceneMaya(iograft.Node):
     @classmethod
     def GetDefinition(cls):
         node = iograft.NodeDefinition("new_scene_maya")
+        node.SetMenuPath("Maya")
         node.AddInput(cls.force)
         return node
 
