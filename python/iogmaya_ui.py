@@ -42,3 +42,14 @@ def ensure_window_shown(window):
     window.show()
     window.activateWindow()
     window.raise_()
+
+
+def refresh_outliners():
+    """
+    Force a refresh of all of Maya's outliner panels.
+    """
+    import maya.cmds
+    editors = maya.cmds.lsUI(editors=True)
+    for editor in editors:
+        if maya.cmds.outlinerEditor(editor, exists=True):
+            maya.cmds.outlinerEditor(editor, edit=True, refresh=True)
