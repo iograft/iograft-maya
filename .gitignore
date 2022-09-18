@@ -1,3 +1,4 @@
 *.pyc
 .reviewboardrc
 .DS_Store
+.vscode
