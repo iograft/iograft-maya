@@ -1,3 +1,3 @@
 @echo off
 
-mayapy.exe %~dp0\iogmaya_subcore %*
+mayapy.exe "%~dp0\iogmaya_subcore" %*
