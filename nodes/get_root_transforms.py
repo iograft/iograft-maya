@@ -42,6 +42,8 @@ class GetRootTransformsMaya(iograft.Node):
         roots = [root for root in roots
                  if maya.cmds.nodeType(root) == "transform"]
 
+        # Return the full pathed roots.
+        roots = maya.cmds.ls(roots, long=True)
         iograft.SetOutput(self.root_transforms, data, roots)
 
 
